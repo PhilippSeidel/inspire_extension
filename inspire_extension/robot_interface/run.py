@@ -38,7 +38,7 @@ class InspireHand:
 if __name__ == "__main__":
     robot = InspireHand()
     interface = IncarRobotInterface(
-        0.1,
+        0.01,
         command_hooks = {
             "right.commands.hand.inspire": robot.move_joints
         },

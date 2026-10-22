@@ -1,54 +1,79 @@
 import serial
 import time
 
-# Register map (RH56F1 Humanoid Five-Finger Dexterous Hand – User Manual Section 2.4)
+
 regdict = {
-    'ID': 1000,
-    'baudrate': 1001,
-    'mode': 1100,
-    'clearErr': 1003,
-    'forceClb': 1007,
-    'angleSet': 1040,
-    'forceSet': 1046,
-    'speedSet': 1052,
-    'angleAct': 1064,
-    'forceAct': 1070,
-    'errCode': 1082,
-    'statusCode': 1088,
-    'temp': 1094,
-    'ip': 1700,
-    'actionSeq': 2160,
-    'actionRun': 2162
+    'ID'        : 1000,
+    'baudrate'  : 1001,
+    'clearErr'  : 1004,
+    'forceClb'  : 1009,
+    'angleSet'  : 1486,
+    'forceSet'  : 1498,
+    'speedSet'  : 1522,
+    'posAct'    : 1534,
+    'angleAct'  : 1546,
+    'forceAct'  : 1582,
+    'current'   : 1594,
+    'errCode'   : 1606,
+    'statusCode': 1612,
+    'temp'      : 1618,
+    'actionSeq' : 2320,
+    'actionRun' : 2322
 }
 
 def openSerial(port, baudrate):
-    ser = serial.Serial(port, baudrate, timeout=0.05)
+    ser = serial.Serial()
+    ser.port = port
+    ser.baudrate = baudrate
+    ser.open()
     return ser
 
-def writeRegister(ser, device_id, addr, num_bytes, values):
-    frame = [0xEB, 0x90, device_id, num_bytes + 3, 0x12, addr & 0xFF, (addr >> 8) & 0xFF]
-    frame.extend(values)
-    checksum = sum(frame[2:]) & 0xFF
-    frame.append(checksum)
-    ser.reset_input_buffer()
-    ser.write(bytes(frame))
+def writeRegister(ser, id, add, num, val):
+    bytes = [0xEB, 0x90]
+    bytes.append(id) # id
+    bytes.append(num + 3) # len
+    bytes.append(0x12) # cmd
+    bytes.append(add & 0xFF)
+    bytes.append((add >> 8) & 0xFF) # add
+    for i in range(num):
+        bytes.append(val[i])
+    checksum = 0x00
+    for i in range(2, len(bytes)):
+        checksum += bytes[i]
+    checksum &= 0xFF
+    bytes.append(checksum)
+    ser.write(bytes)
     time.sleep(0.01)
+    ser.read_all()
 
-def readRegister(ser, device_id, addr, num_bytes, mute=True):
-    expected_len = 8 + num_bytes
-    frame = [0xEB, 0x90, device_id, 0x04, 0x11, addr & 0xFF, (addr >> 8) & 0xFF, num_bytes]
-    checksum = sum(frame[2:]) & 0xFF
-    frame.append(checksum)
-    ser.reset_input_buffer()
-    ser.write(bytes(frame))
+def readRegister(ser, id, add, num, mute=False):
+    bytes = [0xEB, 0x90]
+    bytes.append(id) # id
+    bytes.append(0x04) # len
+    bytes.append(0x11) # cmd
+    bytes.append(add & 0xFF)
+    bytes.append((add >> 8) & 0xFF) # add
+    bytes.append(num)
+    checksum = 0x00
+    for i in range(2, len(bytes)):
+        checksum += bytes[i]
+    checksum &= 0xFF
+    bytes.append(checksum)
+    ser.write(bytes)
     time.sleep(0.01)
-    recv = ser.read(expected_len + 10)
-    header_pos = recv.rfind(b'\x90\xEB')
-    recv = recv[header_pos:]
-    values = list(recv[7:7 + num_bytes])
+    recv = ser.read_all()
+    if len(recv) == 0:
+        return []
+    num = (recv[3] & 0xFF) - 3
+    val = []
+    for i in range(num):
+        val.append(recv[7 + i])
     if not mute:
-        print("Read values:", values)
-    return values
+        print('The register values ​​read are, in order:', end='')
+        for i in range(num):
+            print(val[i], end=' ')
+        print()
+    return val
 
 def write6(ser, device_id, key, values):
     if key not in ['angleSet', 'forceSet', 'speedSet', 'mode']:
