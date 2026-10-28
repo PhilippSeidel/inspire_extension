@@ -4,7 +4,8 @@ version = "0.0.4"
 description = "all core functionality of the incar skills system"
 authors = [
     { name = "Jonne van Haastregt", email = "jmvh@kth.se" },
-    { name = "Michael C. Welle", email = "mwelle@kth.se" }
+    { name = "Michael C. Welle", email = "mwelle@kth.se" },
+    { name = "Philipp Seidel", email = "psei@kth.se" }
 ]
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +15,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["inspire_extension"]
+packages = ["inspire_extension", "inspire_extension.robot_interface"]
 
 [project.entry-points."incar_extensions.processing"]
 inspire = "inspire_extension"
