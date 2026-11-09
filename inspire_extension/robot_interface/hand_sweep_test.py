@@ -1,3 +1,4 @@
+import argparse
 import time
 from .inspire_interface import openSerial, readRegister, writeRegister, write6, regdict
 
@@ -61,7 +62,11 @@ def move_and_wait(ser, dof, target):
 
 
 def main():
-    ser = openSerial(PORT, 115200)
+    parser = argparse.ArgumentParser(description='Sweep each DOF of the Inspire hand closed and open.')
+    parser.add_argument('--port', default=PORT, help=f'serial port of the hand (default: {PORT})')
+    args = parser.parse_args()
+
+    ser = openSerial(args.port, 115200)
 
     dump(ser, 'before')          # capture fault state before anything is cleared
     clear_errors(ser)

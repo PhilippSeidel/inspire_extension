@@ -4,8 +4,8 @@ from .inspire_interface import openSerial, write6, read6
 from incar_networking.robot_interface import IncarRobotInterface
 
 class InspireHand:
-    def __init__(self):
-        self.serial = openSerial('/dev/ttyUSB0', 115200)
+    def __init__(self, serial_port: str = '/dev/ttyUSB0'):
+        self.serial = openSerial(serial_port, 115200)
 
     def move_joints(self, joint_positions: list[float]):
         try:
